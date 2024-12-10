@@ -7,6 +7,6 @@ import (
 )
 
 type CleanerService interface {
-	ProceedCleaningRequest(context.Context, *dto.ProceedCleaningRequestIn) (*dto.ProceedCleaningRequestOut, error)
+	ProceedCleaningRequest(context.Context, *dto.ProceedCleaningRequestIn) *dto.ProceedCleaningRequestOut
 	GetAvailableTeams(context.Context) *dto.GetAvailableTeamsOut
 }
