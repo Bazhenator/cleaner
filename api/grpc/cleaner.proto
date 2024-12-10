@@ -5,6 +5,7 @@ option go_package = "github.com/Bazhenator/cleaner";
 
 service CleanerService {
   rpc ProceedCleaning(ProceedCleaningIn) returns (ProceedCleaningOut);
+  rpc GetAvailbaleTeams(GetAvailableTeamsIn) returns (GetAvailableTeamsOut);
 }
 
 message Request {
@@ -16,8 +17,15 @@ message Request {
 
 message ProceedCleaningIn {
   Request req = 1;
+  uint64 team_id = 2;
 }
 
 message ProceedCleaningOut {
-  bool status = 1;
+  string duration = 1;
+}
+
+message GetAvailableTeamsIn {}
+
+message GetAvailableTeamsOut {
+  repeated uint64 teams_ids = 1;
 }

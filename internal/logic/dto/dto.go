@@ -9,7 +9,7 @@ type Request struct {
 
 type ProceedCleaningRequestIn struct {
 	TeamId  uint64
-	Requset Request
+	Request *Request
 }
 
 type ProceedCleaningRequestOut struct {

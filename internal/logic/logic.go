@@ -42,7 +42,7 @@ func NewService(c *configs.Config, l *logger.Logger) *Service {
 // Returns cleaning duration
 func (s *Service) ProceedCleaningRequest(ctx context.Context, in *dto.ProceedCleaningRequestIn) *dto.ProceedCleaningRequestOut {
 	team := s.teams[in.TeamId]
-	team.AssignRequest(&in.Requset)
+	team.AssignRequest(in.Request)
 
 	duration := team.GetCleaningTime()
 	team.FinishedAt = team.StartedAt.Add(duration)
