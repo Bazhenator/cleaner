@@ -21,10 +21,12 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/Bazhenator/cleaner/configs"
+	"github.com/Bazhenator/cleaner/internal/logic"
+
 	//pb "github.com/Bazhenator/cleaner/pkg/api/grpc"
 	"github.com/Bazhenator/tools/src/logger"
-	middlewareLogging "github.com/Bazhenator/tools/src/middleware/log"
 	grpcListener "github.com/Bazhenator/tools/src/server/grpc/listener"
+	middlewareLogging "github.com/Bazhenator/tools/src/middleware/log"
 )
 
 func main() {
@@ -73,6 +75,8 @@ func run() error {
 	}()
 
 	reflection.Register(grpcServer)
+
+	_ = logic.NewService(config, l)
 
 	lis, deferGrpc, err := grpcListener.NewGrpcListener(config.Grpc)
 	if err != nil {
