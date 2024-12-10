@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package cleaner;
+option go_package = "github.com/Bazhenator/cleaner";
+
+service CleanerService {
+  rpc ProceedCleaning(ProceedCleaningIn) returns (ProceedCleaningOut);
+}
+
+message Request {
+  uint64            id = 1;
+  uint64     client_id = 2;
+  uint32      priority = 3;
+  uint32 cleaning_type = 4;
+}
+
+message ProceedCleaningIn {
+  Request req = 1;
+}
+
+message ProceedCleaningOut {
+  bool status = 1;
+}
