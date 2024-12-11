@@ -1,2 +1,2 @@
 # cleaner
-Cleaner is a cleaning device for cleaning-service (AoPS course work)
+Cleaner is a cleaning device for cleaning service (AoPS course work)
