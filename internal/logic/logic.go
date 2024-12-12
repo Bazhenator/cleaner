@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	CleaningServiceSize = 10
+	CleaningServiceSize = 20
 )
 
 type Service struct {
@@ -24,16 +24,23 @@ type Service struct {
 	mu sync.Mutex
 
 	teams []*entities.CleaningTeam
+	stats      map[uint64]*entities.TeamStats
 }
 
 func NewService(c *configs.Config, l *logger.Logger) *Service {
 	// Cleaning teams' initializing
 	teams := initTeams()
+	stats := make(map[uint64]*entities.TeamStats, len(teams))
+
+	for _, team := range teams {
+		stats[team.Id] = &entities.TeamStats{}
+	}
 
 	return &Service{
 		c: c,
 		l: l,
 
+		stats: stats,
 		teams: teams,
 	}
 }
@@ -54,6 +61,11 @@ func (s *Service) ProceedCleaningRequest(ctx context.Context, in *dto.ProceedCle
 
 		team.CompleteCleaning()
 
+		// Update statistics
+		stats := s.stats[team.Id]
+		stats.ProcessedRequests++
+		stats.TotalCleaningTime += duration
+
 		s.l.Info(fmt.Sprintf("Team %d completed cleaning.", team.Id))
 	}(team, duration)
 
@@ -72,6 +84,20 @@ func (s *Service) GetAvailableTeams(ctx context.Context) *dto.GetAvailableTeamsO
 	}
 
 	return &dto.GetAvailableTeamsOut{Teams: availables}
+}
+
+// GenerateReport generates a report about cleaning teams' workloads
+func (s *Service) GenerateReport() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	fmt.Println("Cleaning Teams Workload Report:")
+	fmt.Println("================================")
+	for _, team := range s.teams {
+		stats := s.stats[team.Id]
+		fmt.Printf("Team ID: %d | Speed: %d | Processed Requests: %d | Total Cleaning Time: %s\n",
+			team.Id, team.Speed, stats.ProcessedRequests, stats.TotalCleaningTime)
+	}
 }
 
 // initTeams - private func for initializing cleaner service's teams during the first connection to service

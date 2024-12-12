@@ -48,7 +48,7 @@ func (ct *CleaningTeam) CompleteCleaning() {
 
 // GetCleaningTime calculates the cleaning duration based on team speed and exponential distribution
 func (ct *CleaningTeam) GetCleaningTime() time.Duration {
-	baseTime := time.Duration(10) * time.Minute // Base cleaning time for Slow speed
+	baseTime := time.Duration(1) * time.Minute // Base cleaning time for Slow speed
 	
 	switch ct.Speed {
 	case Mid:
@@ -60,4 +60,9 @@ func (ct *CleaningTeam) GetCleaningTime() time.Duration {
 	lambda := 1 / float64(baseTime.Seconds())
 	expTime := time.Duration(rand.ExpFloat64() / lambda) * time.Second
 	return expTime
+}
+
+type TeamStats struct {
+	ProcessedRequests int
+	TotalCleaningTime time.Duration
 }

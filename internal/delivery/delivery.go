@@ -48,10 +48,18 @@ func (s *CleanerServer) ProceedCleaning(ctx context.Context, in *cleaner.Proceed
 	return &cleaner.ProceedCleaningOut{Duration: answer.Duration}, nil
 }
 
-func (s *CleanerServer) GetAvailableTeams(ctx context.Context, _ *emptypb.Empty) *cleaner.GetAvailableTeamsOut {
-	s.l.DebugCtx(ctx, "GetAvailableTeams data", logger.NewField("in", nil))
+func (s *CleanerServer) GetAvailableTeams(ctx context.Context, _ *emptypb.Empty) (*cleaner.GetAvailableTeamsOut, error) {
+	s.l.Debug("GetAvailableTeams requested teams")
 
 	answer := s.logic.GetAvailableTeams(ctx)
 
-	return &cleaner.GetAvailableTeamsOut{TeamsIds: answer.Teams}
+	return &cleaner.GetAvailableTeamsOut{TeamsIds: answer.Teams}, nil
+}
+
+func (s *CleanerServer) GenerateReport(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	s.l.Debug("GenerateReport started...")
+	s.logic.GenerateReport()
+
+	s.l.Debug("report created")
+	return &emptypb.Empty{}, nil
 }
