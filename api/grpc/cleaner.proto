@@ -1,11 +1,12 @@
 syntax = "proto3";
 
 package cleaner;
+import "google/protobuf/empty.proto";
 option go_package = "github.com/Bazhenator/cleaner";
 
 service CleanerService {
   rpc ProceedCleaning(ProceedCleaningIn) returns (ProceedCleaningOut);
-  rpc GetAvailbaleTeams(GetAvailableTeamsIn) returns (GetAvailableTeamsOut);
+  rpc GetAvailbaleTeams(google.protobuf.Empty) returns (GetAvailableTeamsOut);
 }
 
 message Request {
@@ -23,8 +24,6 @@ message ProceedCleaningIn {
 message ProceedCleaningOut {
   string duration = 1;
 }
-
-message GetAvailableTeamsIn {}
 
 message GetAvailableTeamsOut {
   repeated uint64 teams_ids = 1;

@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -28,7 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CleanerServiceClient interface {
 	ProceedCleaning(ctx context.Context, in *ProceedCleaningIn, opts ...grpc.CallOption) (*ProceedCleaningOut, error)
-	GetAvailbaleTeams(ctx context.Context, in *GetAvailableTeamsIn, opts ...grpc.CallOption) (*GetAvailableTeamsOut, error)
+	GetAvailbaleTeams(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAvailableTeamsOut, error)
 }
 
 type cleanerServiceClient struct {
@@ -48,7 +49,7 @@ func (c *cleanerServiceClient) ProceedCleaning(ctx context.Context, in *ProceedC
 	return out, nil
 }
 
-func (c *cleanerServiceClient) GetAvailbaleTeams(ctx context.Context, in *GetAvailableTeamsIn, opts ...grpc.CallOption) (*GetAvailableTeamsOut, error) {
+func (c *cleanerServiceClient) GetAvailbaleTeams(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAvailableTeamsOut, error) {
 	out := new(GetAvailableTeamsOut)
 	err := c.cc.Invoke(ctx, CleanerService_GetAvailbaleTeams_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -62,7 +63,7 @@ func (c *cleanerServiceClient) GetAvailbaleTeams(ctx context.Context, in *GetAva
 // for forward compatibility
 type CleanerServiceServer interface {
 	ProceedCleaning(context.Context, *ProceedCleaningIn) (*ProceedCleaningOut, error)
-	GetAvailbaleTeams(context.Context, *GetAvailableTeamsIn) (*GetAvailableTeamsOut, error)
+	GetAvailbaleTeams(context.Context, *emptypb.Empty) (*GetAvailableTeamsOut, error)
 	mustEmbedUnimplementedCleanerServiceServer()
 }
 
@@ -73,7 +74,7 @@ type UnimplementedCleanerServiceServer struct {
 func (UnimplementedCleanerServiceServer) ProceedCleaning(context.Context, *ProceedCleaningIn) (*ProceedCleaningOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProceedCleaning not implemented")
 }
-func (UnimplementedCleanerServiceServer) GetAvailbaleTeams(context.Context, *GetAvailableTeamsIn) (*GetAvailableTeamsOut, error) {
+func (UnimplementedCleanerServiceServer) GetAvailbaleTeams(context.Context, *emptypb.Empty) (*GetAvailableTeamsOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailbaleTeams not implemented")
 }
 func (UnimplementedCleanerServiceServer) mustEmbedUnimplementedCleanerServiceServer() {}
@@ -108,7 +109,7 @@ func _CleanerService_ProceedCleaning_Handler(srv interface{}, ctx context.Contex
 }
 
 func _CleanerService_GetAvailbaleTeams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAvailableTeamsIn)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -120,7 +121,7 @@ func _CleanerService_GetAvailbaleTeams_Handler(srv interface{}, ctx context.Cont
 		FullMethod: CleanerService_GetAvailbaleTeams_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CleanerServiceServer).GetAvailbaleTeams(ctx, req.(*GetAvailableTeamsIn))
+		return srv.(CleanerServiceServer).GetAvailbaleTeams(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

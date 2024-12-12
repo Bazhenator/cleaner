@@ -3,6 +3,8 @@ package delivery
 import (
 	"context"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/Bazhenator/cleaner/configs"
 	"github.com/Bazhenator/cleaner/internal/logic"
 	"github.com/Bazhenator/cleaner/internal/logic/dto"
@@ -46,7 +48,7 @@ func (s *CleanerServer) ProceedCleaning(ctx context.Context, in *cleaner.Proceed
 	return &cleaner.ProceedCleaningOut{Duration: answer.Duration}, nil
 }
 
-func (s *CleanerServer) GetAvailableTeams(ctx context.Context, _ *cleaner.GetAvailableTeamsIn) *cleaner.GetAvailableTeamsOut {
+func (s *CleanerServer) GetAvailableTeams(ctx context.Context, _ *emptypb.Empty) *cleaner.GetAvailableTeamsOut {
 	s.l.DebugCtx(ctx, "GetAvailableTeams data", logger.NewField("in", nil))
 
 	answer := s.logic.GetAvailableTeams(ctx)
