@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	CleanerService_ProceedCleaning_FullMethodName   = "/cleaner.CleanerService/ProceedCleaning"
 	CleanerService_GetAvailableTeams_FullMethodName = "/cleaner.CleanerService/GetAvailableTeams"
+	CleanerService_GenerateReport_FullMethodName    = "/cleaner.CleanerService/GenerateReport"
 )
 
 // CleanerServiceClient is the client API for CleanerService service.
@@ -30,6 +31,7 @@ const (
 type CleanerServiceClient interface {
 	ProceedCleaning(ctx context.Context, in *ProceedCleaningIn, opts ...grpc.CallOption) (*ProceedCleaningOut, error)
 	GetAvailableTeams(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAvailableTeamsOut, error)
+	GenerateReport(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type cleanerServiceClient struct {
@@ -58,12 +60,22 @@ func (c *cleanerServiceClient) GetAvailableTeams(ctx context.Context, in *emptyp
 	return out, nil
 }
 
+func (c *cleanerServiceClient) GenerateReport(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, CleanerService_GenerateReport_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CleanerServiceServer is the server API for CleanerService service.
 // All implementations must embed UnimplementedCleanerServiceServer
 // for forward compatibility
 type CleanerServiceServer interface {
 	ProceedCleaning(context.Context, *ProceedCleaningIn) (*ProceedCleaningOut, error)
 	GetAvailableTeams(context.Context, *emptypb.Empty) (*GetAvailableTeamsOut, error)
+	GenerateReport(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	mustEmbedUnimplementedCleanerServiceServer()
 }
 
@@ -76,6 +88,9 @@ func (UnimplementedCleanerServiceServer) ProceedCleaning(context.Context, *Proce
 }
 func (UnimplementedCleanerServiceServer) GetAvailableTeams(context.Context, *emptypb.Empty) (*GetAvailableTeamsOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailableTeams not implemented")
+}
+func (UnimplementedCleanerServiceServer) GenerateReport(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateReport not implemented")
 }
 func (UnimplementedCleanerServiceServer) mustEmbedUnimplementedCleanerServiceServer() {}
 
@@ -126,6 +141,24 @@ func _CleanerService_GetAvailableTeams_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CleanerService_GenerateReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CleanerServiceServer).GenerateReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CleanerService_GenerateReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CleanerServiceServer).GenerateReport(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CleanerService_ServiceDesc is the grpc.ServiceDesc for CleanerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -140,6 +173,10 @@ var CleanerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailableTeams",
 			Handler:    _CleanerService_GetAvailableTeams_Handler,
+		},
+		{
+			MethodName: "GenerateReport",
+			Handler:    _CleanerService_GenerateReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
