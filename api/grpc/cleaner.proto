@@ -6,7 +6,7 @@ option go_package = "github.com/Bazhenator/cleaner";
 
 service CleanerService {
   rpc ProceedCleaning(ProceedCleaningIn) returns (ProceedCleaningOut);
-  rpc GetAvailbaleTeams(google.protobuf.Empty) returns (GetAvailableTeamsOut);
+  rpc GetAvailableTeams(google.protobuf.Empty) returns (GetAvailableTeamsOut);
 }
 
 message Request {
