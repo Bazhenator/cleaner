@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/Bazhenator/cleaner/internal/logic/dto"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type CleanerService interface {
-	ProceedCleaningRequest(context.Context, *dto.ProceedCleaningRequestIn) *dto.ProceedCleaningRequestOut
-	GetAvailableTeams(context.Context) *dto.GetAvailableTeamsOut
-	GenerateReport()
+	ProceedCleaningRequest(context.Context, *dto.ProceedCleaningRequestIn) (*dto.ProceedCleaningRequestOut, error)
+	GetAvailableTeams(context.Context) (*dto.GetAvailableTeamsOut, error)
+	GetTeamsStats(context.Context) (*dto.GetTeamsStatsOut, error)
 }

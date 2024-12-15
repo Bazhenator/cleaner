@@ -7,25 +7,38 @@ option go_package = "github.com/Bazhenator/cleaner";
 service CleanerService {
   rpc ProceedCleaning(ProceedCleaningIn) returns (ProceedCleaningOut);
   rpc GetAvailableTeams(google.protobuf.Empty) returns (GetAvailableTeamsOut);
-  rpc GenerateReport(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc GetTeamsStats(google.protobuf.Empty) returns (GetTeamsStatsOut);
 }
 
 message Request {
-  uint64            id = 1;
-  uint64     client_id = 2;
-  uint32      priority = 3;
-  uint32 cleaning_type = 4;
+  uint64                        id = 1;
+  uint64                 client_id = 2;
+  uint32                  priority = 3;
+  uint32             cleaning_type = 4;
+  optional uint64          team_id = 5;
+  optional double  time_in_cleaner = 6;
 }
 
 message ProceedCleaningIn {
-  Request req = 1;
+  Request    req = 1;
   uint64 team_id = 2;
 }
 
 message ProceedCleaningOut {
-  string duration = 1;
+  Request req = 1;
 }
 
 message GetAvailableTeamsOut {
   repeated uint64 teams_ids = 1;
+}
+
+message Team {
+  uint64                   id = 1;
+	uint32                speed = 2;
+  uint64   processed_requests = 3;
+	double      total_busy_time = 4;
+}
+
+message GetTeamsStatsOut {
+  repeated Team teams = 1;
 }

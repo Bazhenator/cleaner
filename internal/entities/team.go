@@ -23,33 +23,34 @@ const (
 )
 
 type CleaningTeam struct {
-	Id         uint64
-	Request    *dto.Request
-	Status     Status
-	Speed      Speed
-	StartedAt  time.Time
-	FinishedAt time.Time
+	Id                 uint64
+	Request            *dto.Request
+	Status             Status
+	Speed              Speed
+	ProcessedRequests  uint64
+	TotalBusyTime      time.Duration
+	StartedAt          time.Time
 }
 
 // AssignRequest assigns a cleaning request to the team
 func (ct *CleaningTeam) AssignRequest(req *dto.Request) {
 	ct.Request = req
 	ct.Status = Busy
+	ct.Request.TeamId = ct.Id
 	ct.StartedAt = time.Now()
 }
 
 // CompleteCleaning marks the cleaning as completed
-func (ct *CleaningTeam) CompleteCleaning() {
+func (ct *CleaningTeam) CompleteCleaning(timer time.Time) {
 	ct.Status = Available
-	ct.Request = nil
-	ct.StartedAt = time.Time{}
-	ct.FinishedAt = time.Time{}
+	ct.ProcessedRequests += 1
+	ct.TotalBusyTime += time.Since(timer)
 }
 
 // GetCleaningTime calculates the cleaning duration based on team speed and exponential distribution
-func (ct *CleaningTeam) GetCleaningTime() time.Duration {
-	baseTime := time.Duration(1) * time.Minute // Base cleaning time for Slow speed
-	
+func (ct *CleaningTeam) GetCleaningTime(defSpeed uint64) time.Duration {
+	baseTime := time.Duration(defSpeed) * time.Second // Base cleaning time for Slow speed
+
 	switch ct.Speed {
 	case Mid:
 		baseTime /= 2
@@ -58,11 +59,6 @@ func (ct *CleaningTeam) GetCleaningTime() time.Duration {
 	}
 	// Exponential distribution simulation
 	lambda := 1 / float64(baseTime.Seconds())
-	expTime := time.Duration(rand.ExpFloat64() / lambda) * time.Second
+	expTime := time.Duration(rand.ExpFloat64()/lambda) * time.Second
 	return expTime
-}
-
-type TeamStats struct {
-	ProcessedRequests int
-	TotalCleaningTime time.Duration
 }

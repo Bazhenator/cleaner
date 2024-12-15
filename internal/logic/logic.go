@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -14,68 +15,63 @@ import (
 	"github.com/Bazhenator/tools/src/logger"
 )
 
-const (
-	CleaningServiceSize = 20
-)
-
 type Service struct {
 	c  *configs.Config
 	l  *logger.Logger
 	mu sync.Mutex
 
 	teams []*entities.CleaningTeam
-	stats      map[uint64]*entities.TeamStats
 }
 
 func NewService(c *configs.Config, l *logger.Logger) *Service {
 	// Cleaning teams' initializing
-	teams := initTeams()
-	stats := make(map[uint64]*entities.TeamStats, len(teams))
-
-	for _, team := range teams {
-		stats[team.Id] = &entities.TeamStats{}
-	}
+	teams := initTeams(c.TeamsAmount)
 
 	return &Service{
 		c: c,
 		l: l,
 
-		stats: stats,
 		teams: teams,
 	}
 }
 
 // ProceedCleaningRequest proceeds request from user, assigns it to cleaning team and processes it.
 // Returns cleaning duration
-func (s *Service) ProceedCleaningRequest(ctx context.Context, in *dto.ProceedCleaningRequestIn) *dto.ProceedCleaningRequestOut {
+func (s *Service) ProceedCleaningRequest(ctx context.Context, in *dto.ProceedCleaningRequestIn) (*dto.ProceedCleaningRequestOut, error) {
 	team := s.teams[in.TeamId]
+	duration := team.GetCleaningTime(s.c.BaseSpeed)
 	team.AssignRequest(in.Request)
-
-	duration := team.GetCleaningTime()
-	team.FinishedAt = team.StartedAt.Add(duration)
 
 	go func(team *entities.CleaningTeam, duration time.Duration) {
 		time.Sleep(duration)
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		team.CompleteCleaning()
-
-		// Update statistics
-		stats := s.stats[team.Id]
-		stats.ProcessedRequests++
-		stats.TotalCleaningTime += duration
+		team.CompleteCleaning(team.StartedAt)
 
 		s.l.Info(fmt.Sprintf("Team %d completed cleaning.", team.Id))
 	}(team, duration)
 
-	return &dto.ProceedCleaningRequestOut{Duration: duration.String()}
+	team.Request.TimeInCleaner += duration
+
+	processedReq := team.Request
+	if processedReq == nil {
+		s.l.ErrorCtx(ctx, "Request came nil after cleaning", logger.NewErrorField(errors.New("nil req")))
+		return nil, errors.New("nil req")
+	}
+
+	return &dto.ProceedCleaningRequestOut{Req: processedReq}, nil
 }
 
 // GetAvailableTeams checks available teams in cleaning service.
 // Returns available cleaning teams' IDs
-func (s *Service) GetAvailableTeams(ctx context.Context) *dto.GetAvailableTeamsOut {
-	availables := make([]uint64, 0, CleaningServiceSize)
+func (s *Service) GetAvailableTeams(ctx context.Context) (*dto.GetAvailableTeamsOut, error) {
+	availables := make([]uint64, 0, s.c.TeamsAmount)
+
+	if len(s.teams) == 0 {
+		s.l.Error("teams are not initialized")
+		return nil, errors.New("empty cleaning service")
+	}
 
 	for _, team := range s.teams {
 		if team.Status == entities.Available {
@@ -83,35 +79,42 @@ func (s *Service) GetAvailableTeams(ctx context.Context) *dto.GetAvailableTeamsO
 		}
 	}
 
-	return &dto.GetAvailableTeamsOut{Teams: availables}
+	return &dto.GetAvailableTeamsOut{Teams: availables}, nil
 }
 
-// GenerateReport generates a report about cleaning teams' workloads
-func (s *Service) GenerateReport() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	fmt.Println("Cleaning Teams Workload Report:")
-	fmt.Println("================================")
-	for _, team := range s.teams {
-		stats := s.stats[team.Id]
-		fmt.Printf("Team ID: %d | Speed: %d | Processed Requests: %d | Total Cleaning Time: %s\n",
-			team.Id, team.Speed, stats.ProcessedRequests, stats.TotalCleaningTime)
+// GetTeamsStats gets statistics of each team in cleaning service, while working to build statistic table for dispatcher.
+// Returns all cleaning teams' statistics.
+func (s *Service) GetTeamsStats(ctx context.Context) (*dto.GetTeamsStatsOut, error) {
+	stats := s.teams
+	if stats == nil {
+		s.l.Error("teams array is nil")
+		return nil, errors.New("no cleanning teams in service")
 	}
+
+	answer := make([]*dto.TeamStats, 0, len(stats))
+	for _, stat := range stats {
+		answer = append(answer, &dto.TeamStats{
+			Id: stat.Id,
+			Speed: uint32(stat.Speed),
+			ProcessedRequests: stat.ProcessedRequests,
+			TotalBusyTime: stat.TotalBusyTime,
+		})
+	}
+
+	return &dto.GetTeamsStatsOut{Stats: answer}, nil
 }
 
 // initTeams - private func for initializing cleaner service's teams during the first connection to service
-func initTeams() []*entities.CleaningTeam {
-	teams := make([]*entities.CleaningTeam, 0, CleaningServiceSize)
+func initTeams(size uint64) []*entities.CleaningTeam {
+	teams := make([]*entities.CleaningTeam, 0, size)
 
-	for i := 0; i < CleaningServiceSize; i++ {
+	for i := uint64(0); i < size; i++ {
 		teams = append(teams, &entities.CleaningTeam{
-			Id:         uint64(i),
-			Request:    nil,
-			Status:     entities.Available,
-			Speed:      entities.Speed(rand.Intn(3) + 1),
-			StartedAt:  time.Time{},
-			FinishedAt: time.Time{},
+			Id:        uint64(i),
+			Request:   nil,
+			Status:    entities.Available,
+			Speed:     entities.Speed(rand.Intn(3) + 1),
+			StartedAt: time.Time{},
 		})
 	}
 

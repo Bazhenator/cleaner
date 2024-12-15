@@ -31,10 +31,10 @@ func NewCleanerServer(c *configs.Config, l *logger.Logger, logic logic.CleanerSe
 }
 
 func (s *CleanerServer) ProceedCleaning(ctx context.Context, in *cleaner.ProceedCleaningIn) (*cleaner.ProceedCleaningOut, error) {
-	s.l.DebugCtx(ctx, "ProceedCleaning data", logger.NewField("", in))
+	s.l.DebugCtx(ctx, "ProceedCleaning started with", logger.NewField("data", in))
 	req := in.GetReq()
 
-	answer := s.logic.ProceedCleaningRequest(ctx, &dto.ProceedCleaningRequestIn{
+	answer, err := s.logic.ProceedCleaningRequest(ctx, &dto.ProceedCleaningRequestIn{
 		TeamId: in.GetTeamId(),
 		Request: &dto.Request{
 			Id:           req.GetId(),
@@ -42,24 +42,56 @@ func (s *CleanerServer) ProceedCleaning(ctx context.Context, in *cleaner.Proceed
 			CleaningType: uint(req.GetCleaningType()),
 			Priority:     uint(req.GetPriority()),
 		},
-	},
-	)
+	})
+	if err != nil {
+		s.l.ErrorCtx(ctx, "error occurred:", logger.NewErrorField(err))
+		return nil, err
+	}
 
-	return &cleaner.ProceedCleaningOut{Duration: answer.Duration}, nil
+	totalTime := answer.Req.TimeInCleaner.Seconds()
+
+	return &cleaner.ProceedCleaningOut{Req: &cleaner.Request{
+		Id:            answer.Req.Id,
+		ClientId:      answer.Req.ClientId,
+		Priority:      uint32(answer.Req.Priority),
+		CleaningType:  uint32(answer.Req.CleaningType),
+		TeamId:        &answer.Req.TeamId,
+		TimeInCleaner: &totalTime,
+	}}, nil
 }
 
 func (s *CleanerServer) GetAvailableTeams(ctx context.Context, _ *emptypb.Empty) (*cleaner.GetAvailableTeamsOut, error) {
 	s.l.Debug("GetAvailableTeams requested teams")
 
-	answer := s.logic.GetAvailableTeams(ctx)
+	answer, err := s.logic.GetAvailableTeams(ctx)
+	if err != nil {
+		s.l.ErrorCtx(ctx, "error occurred:", logger.NewErrorField(err))
+		return nil, err
+	}
 
 	return &cleaner.GetAvailableTeamsOut{TeamsIds: answer.Teams}, nil
 }
 
-func (s *CleanerServer) GenerateReport(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	s.l.Debug("GenerateReport started...")
-	s.logic.GenerateReport()
+func (s *CleanerServer) GetTeamsStats(ctx context.Context, _ *emptypb.Empty) (*cleaner.GetTeamsStatsOut, error) {
+	s.l.Debug("GetTeamsStats requested stats")
 
-	s.l.Debug("report created")
-	return &emptypb.Empty{}, nil
+	stats, err := s.logic.GetTeamsStats(ctx)
+	if err != nil {
+		s.l.ErrorCtx(ctx, "error occurred:", logger.NewErrorField(err))
+		return nil, err
+	}
+
+	answer := make([]*cleaner.Team, 0, len(stats.Stats)) 
+	for _, stat := range stats.Stats {
+		totalTime := stat.TotalBusyTime.Seconds()
+
+		answer = append(answer, &cleaner.Team{
+			Id: stat.Id,
+			Speed: stat.Speed,
+			ProcessedRequests: stat.ProcessedRequests,
+			TotalBusyTime: totalTime,
+		})
+	}
+
+	return &cleaner.GetTeamsStatsOut{Teams: answer}, nil
 }
